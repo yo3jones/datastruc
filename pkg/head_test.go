@@ -1,14 +1,17 @@
 package datastruc
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestHeap(t *testing.T) {
 	testLesser := func(i, j int) bool {
 		return i < j
 	}
 
-	heap := NewHeap(testLesser, 10, 1, 8)
+	heap := NewHeap[int](testLesser)
 
+	heap.PushMany(10, 1, 8)
 	heap.Push(5)
 	heap.Push(7)
 	heap.Push(3)

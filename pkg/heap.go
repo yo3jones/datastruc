@@ -6,6 +6,7 @@ type Heap[T any] interface {
 	Peak() T
 	Pop() T
 	Push(v T)
+	PushMany(v ...T)
 }
 
 type heap[T any] struct {
@@ -14,17 +15,15 @@ type heap[T any] struct {
 	lock   *sync.Mutex
 }
 
-func NewHeap[T any](lesser func(i, j T) bool, initialValues ...T) Heap[T] {
+func NewHeap[T any](lesser func(i, j T) bool) Heap[T] {
+	return NewHeapSize[T](lesser, 100)
+}
+
+func NewHeapSize[T any](lesser func(i, j T) bool, size int) Heap[T] {
 	heap := &heap[T]{
 		lesser: lesser,
-		data:   make([]T, 0, len(initialValues)),
+		data:   make([]T, 0, size),
 		lock:   &sync.Mutex{},
-	}
-
-	heap.data = append(heap.data, initialValues...)
-	dataLen := len(heap.data)
-	for i := dataLen - 1; i >= dataLen/2; i-- {
-		heap.pushUp(i)
 	}
 
 	return heap
@@ -57,6 +56,14 @@ func (heap *heap[T]) Push(v T) {
 
 	heap.data = append(heap.data, v)
 	heap.pushUp(len(heap.data) - 1)
+}
+
+func (heap *heap[T]) PushMany(v ...T) {
+	heap.data = append(heap.data, v...)
+	dataLen := len(heap.data)
+	for i := dataLen - 1; i >= dataLen/2; i-- {
+		heap.pushUp(i)
+	}
 }
 
 func (heap *heap[T]) pushUp(index int) {
