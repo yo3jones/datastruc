@@ -3,6 +3,7 @@ package datastruc
 import "sync"
 
 type Heap[T any] interface {
+	Len() int
 	Peak() T
 	Pop() T
 	Push(v T)
@@ -27,6 +28,10 @@ func NewHeapSize[T any](lesser func(i, j T) bool, size int) Heap[T] {
 	}
 
 	return heap
+}
+
+func (heap *heap[T]) Len() int {
+	return len(heap.data)
 }
 
 func (heap *heap[T]) Peak() T {

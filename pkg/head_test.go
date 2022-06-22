@@ -9,7 +9,7 @@ func TestHeap(t *testing.T) {
 		return i < j
 	}
 
-	heap := NewHeap[int](testLesser)
+	heap := NewHeap(testLesser)
 
 	heap.PushMany(10, 1, 8)
 	heap.Push(5)
@@ -27,5 +27,9 @@ func TestHeap(t *testing.T) {
 		if got = heap.Pop(); got != expect {
 			t.Errorf("expected %d but got %d", expect, got)
 		}
+	}
+
+	if heap.Len() != 0 {
+		t.Errorf("expected len of 0 but got %d", heap.Len())
 	}
 }
