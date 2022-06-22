@@ -31,6 +31,9 @@ func NewHeapSize[T any](lesser func(i, j T) bool, size int) Heap[T] {
 }
 
 func (heap *heap[T]) Len() int {
+	heap.lock.Lock()
+	defer heap.lock.Unlock()
+
 	return len(heap.data)
 }
 
