@@ -3,9 +3,12 @@ package datastruc
 import "sync"
 
 type Heap[T any] interface {
+	IsEmpty() bool
 	Len() int
 	Peak() T
 	Pop() T
+	PopIfLeast(v T) (popped T, wasLeast bool)
+	PopIfNotLeast(v T) (popped T, wasNotLeast bool)
 	Push(v T)
 	PushMany(v ...T)
 }
@@ -30,32 +33,66 @@ func NewHeapSize[T any](lesser func(i, j T) bool, size int) Heap[T] {
 	return heap
 }
 
+func (heap *heap[T]) IsEmpty() bool {
+	heap.lock.Lock()
+	defer heap.lock.Unlock()
+
+	return heap.isEmptyUnsafe()
+}
+
 func (heap *heap[T]) Len() int {
 	heap.lock.Lock()
 	defer heap.lock.Unlock()
 
-	return len(heap.data)
+	return heap.lenUnsafe()
 }
 
 func (heap *heap[T]) Peak() T {
 	heap.lock.Lock()
 	defer heap.lock.Unlock()
 
-	return heap.data[0]
+	return heap.peakUnsafe()
 }
 
-func (heap *heap[T]) Pop() T {
+func (heap *heap[T]) Pop() (least T) {
 	heap.lock.Lock()
 	defer heap.lock.Unlock()
 
-	value := heap.data[0]
-	lastIndex := len(heap.data) - 1
-	heap.data[0] = heap.data[lastIndex]
-	heap.data = heap.data[:lastIndex]
+	return heap.popUnsafe()
+}
 
-	heap.pushDown(0)
+func (heap *heap[T]) PopIfLeast(v T) (popped T, wasLeast bool) {
+	heap.lock.Lock()
+	defer heap.lock.Unlock()
 
-	return value
+	if heap.isEmptyUnsafe() {
+		return popped, false
+	}
+
+	least := heap.peakUnsafe()
+
+	if !heap.lesser(v, least) {
+		return popped, false
+	}
+
+	return least, true
+}
+
+func (heap *heap[T]) PopIfNotLeast(v T) (popped T, wasNotLeast bool) {
+	heap.lock.Lock()
+	defer heap.lock.Unlock()
+
+	if heap.isEmptyUnsafe() {
+		return popped, false
+	}
+
+	least := heap.peakUnsafe()
+
+	if heap.lesser(v, least) {
+		return popped, false
+	}
+
+	return least, true
 }
 
 func (heap *heap[T]) Push(v T) {
@@ -74,26 +111,35 @@ func (heap *heap[T]) PushMany(v ...T) {
 	}
 }
 
-func (heap *heap[T]) pushUp(index int) {
-	for {
-		if index <= 0 {
-			return
-		}
+func (heap *heap[T]) isEmptyUnsafe() bool {
+	return heap.lenUnsafe() <= 0
+}
 
-		parentIndex := index / 2
+func (heap *heap[T]) lenUnsafe() int {
+	return len(heap.data)
+}
 
-		value := heap.data[index]
-		parentValue := heap.data[parentIndex]
-
-		if !heap.lesser(heap.data[index], heap.data[parentIndex]) {
-			return
-		}
-
-		heap.data[parentIndex] = value
-		heap.data[index] = parentValue
-
-		index = parentIndex
+func (heap *heap[T]) peakUnsafe() (least T) {
+	if heap.isEmptyUnsafe() {
+		return least
 	}
+
+	return heap.data[0]
+}
+
+func (heap *heap[T]) popUnsafe() (least T) {
+	if heap.isEmptyUnsafe() {
+		return least
+	}
+
+	value := heap.data[0]
+	lastIndex := len(heap.data) - 1
+	heap.data[0] = heap.data[lastIndex]
+	heap.data = heap.data[:lastIndex]
+
+	heap.pushDown(0)
+
+	return value
 }
 
 func (heap *heap[T]) pushDown(index int) {
@@ -138,5 +184,27 @@ func (heap *heap[T]) pushDown(index int) {
 		heap.data[index] = lessValue
 		heap.data[lessIndex] = value
 		index = lessIndex
+	}
+}
+
+func (heap *heap[T]) pushUp(index int) {
+	for {
+		if index <= 0 {
+			return
+		}
+
+		parentIndex := index / 2
+
+		value := heap.data[index]
+		parentValue := heap.data[parentIndex]
+
+		if !heap.lesser(heap.data[index], heap.data[parentIndex]) {
+			return
+		}
+
+		heap.data[parentIndex] = value
+		heap.data[index] = parentValue
+
+		index = parentIndex
 	}
 }
