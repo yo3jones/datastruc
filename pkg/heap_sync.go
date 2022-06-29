@@ -70,7 +70,7 @@ func (heap *syncHeap[T]) PopIf(
 		return popped, false
 	}
 
-	return least, true
+	return backingHeap.Pop(), true
 }
 
 func (heap *syncHeap[T]) Push(v T) {

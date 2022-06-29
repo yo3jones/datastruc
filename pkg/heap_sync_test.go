@@ -48,6 +48,7 @@ func TestPopIf(t *testing.T) {
 		value           int
 		expectPopped    int
 		expectWasPopped bool
+		expectLen       int
 	}
 
 	tests := []test{
@@ -57,6 +58,7 @@ func TestPopIf(t *testing.T) {
 			value:           4,
 			expectPopped:    5,
 			expectWasPopped: true,
+			expectLen:       2,
 		},
 		{
 			name:            "without popped",
@@ -64,6 +66,7 @@ func TestPopIf(t *testing.T) {
 			value:           8,
 			expectPopped:    0,
 			expectWasPopped: false,
+			expectLen:       3,
 		},
 		{
 			name:            "with empty",
@@ -71,6 +74,7 @@ func TestPopIf(t *testing.T) {
 			value:           -1,
 			expectPopped:    0,
 			expectWasPopped: false,
+			expectLen:       0,
 		},
 	}
 
@@ -96,6 +100,14 @@ func TestPopIf(t *testing.T) {
 					"expected popped to be %d but was %d",
 					tc.expectPopped,
 					gotPopped,
+				)
+			}
+
+			if heap.Len() != tc.expectLen {
+				t.Errorf(
+					"expected the heap to have len of %d but got %d",
+					tc.expectLen,
+					heap.Len(),
 				)
 			}
 		})
