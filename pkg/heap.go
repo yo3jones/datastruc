@@ -1,14 +1,10 @@
 package datastruc
 
-import "sync"
-
 type Heap[T any] interface {
 	IsEmpty() bool
 	Len() int
 	Peak() T
 	Pop() T
-	PopIfLeast(v T) (popped T, wasLeast bool)
-	PopIfNotLeast(v T) (popped T, wasNotLeast bool)
 	Push(v T)
 	PushMany(v ...T)
 }
@@ -16,119 +12,47 @@ type Heap[T any] interface {
 type heap[T any] struct {
 	lesser func(i, j T) bool
 	data   []T
-	lock   *sync.Mutex
 }
 
-func NewHeap[T any](lesser func(i, j T) bool) Heap[T] {
-	return NewHeapSize[T](lesser, 100)
-}
+func NewHeap[T any](
+	lesser func(i, j T) bool,
+	options ...HeapOption,
+) Heap[T] {
+	capacity := 100
 
-func NewHeapSize[T any](lesser func(i, j T) bool, size int) Heap[T] {
+	for _, option := range options {
+		switch option := option.(type) {
+		case HeapOptionCapacity:
+			capacity = option.value
+		}
+	}
+
 	heap := &heap[T]{
 		lesser: lesser,
-		data:   make([]T, 0, size),
-		lock:   &sync.Mutex{},
+		data:   make([]T, 0, capacity),
 	}
 
 	return heap
 }
 
 func (heap *heap[T]) IsEmpty() bool {
-	heap.lock.Lock()
-	defer heap.lock.Unlock()
-
-	return heap.isEmptyUnsafe()
+	return heap.Len() <= 0
 }
 
 func (heap *heap[T]) Len() int {
-	heap.lock.Lock()
-	defer heap.lock.Unlock()
-
-	return heap.lenUnsafe()
-}
-
-func (heap *heap[T]) Peak() T {
-	heap.lock.Lock()
-	defer heap.lock.Unlock()
-
-	return heap.peakUnsafe()
-}
-
-func (heap *heap[T]) Pop() (least T) {
-	heap.lock.Lock()
-	defer heap.lock.Unlock()
-
-	return heap.popUnsafe()
-}
-
-func (heap *heap[T]) PopIfLeast(v T) (popped T, wasLeast bool) {
-	heap.lock.Lock()
-	defer heap.lock.Unlock()
-
-	if heap.isEmptyUnsafe() {
-		return popped, false
-	}
-
-	least := heap.peakUnsafe()
-
-	if !heap.lesser(v, least) {
-		return popped, false
-	}
-
-	return least, true
-}
-
-func (heap *heap[T]) PopIfNotLeast(v T) (popped T, wasNotLeast bool) {
-	heap.lock.Lock()
-	defer heap.lock.Unlock()
-
-	if heap.isEmptyUnsafe() {
-		return popped, false
-	}
-
-	least := heap.peakUnsafe()
-
-	if heap.lesser(v, least) {
-		return popped, false
-	}
-
-	return least, true
-}
-
-func (heap *heap[T]) Push(v T) {
-	heap.lock.Lock()
-	defer heap.lock.Unlock()
-
-	heap.data = append(heap.data, v)
-	heap.pushUp(len(heap.data) - 1)
-}
-
-func (heap *heap[T]) PushMany(v ...T) {
-	heap.data = append(heap.data, v...)
-	dataLen := len(heap.data)
-	for i := dataLen - 1; i >= dataLen/2; i-- {
-		heap.pushUp(i)
-	}
-}
-
-func (heap *heap[T]) isEmptyUnsafe() bool {
-	return heap.lenUnsafe() <= 0
-}
-
-func (heap *heap[T]) lenUnsafe() int {
 	return len(heap.data)
 }
 
-func (heap *heap[T]) peakUnsafe() (least T) {
-	if heap.isEmptyUnsafe() {
+func (heap *heap[T]) Peak() (least T) {
+	if heap.IsEmpty() {
 		return least
 	}
 
 	return heap.data[0]
 }
 
-func (heap *heap[T]) popUnsafe() (least T) {
-	if heap.isEmptyUnsafe() {
+func (heap *heap[T]) Pop() (least T) {
+	if heap.IsEmpty() {
 		return least
 	}
 
@@ -140,6 +64,21 @@ func (heap *heap[T]) popUnsafe() (least T) {
 	heap.pushDown(0)
 
 	return value
+}
+
+func (heap *heap[T]) Push(v T) {
+	heap.data = append(heap.data, v)
+	heap.pushUp(len(heap.data) - 1)
+}
+
+func (heap *heap[T]) PushMany(v ...T) {
+	heap.data = append(heap.data, v...)
+	dataLen := len(heap.data)
+
+	// TODO can be more specific on the process count
+	for i := dataLen - 1; i >= dataLen/2; i-- {
+		heap.pushUp(i)
+	}
 }
 
 func (heap *heap[T]) pushDown(index int) {
@@ -207,4 +146,16 @@ func (heap *heap[T]) pushUp(index int) {
 
 		index = parentIndex
 	}
+}
+
+type HeapOption interface {
+	isHeapOption() bool
+}
+
+type HeapOptionCapacity struct {
+	value int
+}
+
+func (option HeapOptionCapacity) isHeapOption() bool {
+	return true
 }

@@ -9,7 +9,7 @@ var testLesser = func(i, j int) bool {
 }
 
 func TestHeap(t *testing.T) {
-	heap := NewHeap(testLesser)
+	heap := NewHeap(testLesser, HeapOptionCapacity{100})
 
 	heap.PushMany(10, 1, 8)
 	heap.Push(5)
@@ -46,117 +46,25 @@ func TestHeap(t *testing.T) {
 	}
 }
 
-func TestPopIfLeast(t *testing.T) {
+func TestIsHeapOption(t *testing.T) {
 	type test struct {
-		name           string
-		values         []int
-		value          int
-		expectPopped   int
-		expectWasLeast bool
+		name   string
+		option HeapOption
 	}
 
 	tests := []test{
 		{
-			name:           "with least",
-			values:         []int{2, 3, 4},
-			value:          1,
-			expectPopped:   2,
-			expectWasLeast: true,
-		},
-		{
-			name:           "without least",
-			values:         []int{2, 3, 4},
-			value:          5,
-			expectPopped:   0,
-			expectWasLeast: false,
-		},
-		{
-			name:           "with empty",
-			values:         []int{},
-			value:          -1,
-			expectPopped:   0,
-			expectWasLeast: false,
+			name:   "HeapOptionCapacity",
+			option: HeapOptionCapacity{100},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			heap := NewHeap(testLesser)
-			heap.PushMany(tc.values...)
-			gotPopped, gotWasLeast := heap.PopIfLeast(tc.value)
+			got := tc.option.isHeapOption()
 
-			if gotWasLeast != tc.expectWasLeast {
-				t.Errorf(
-					"expect wasLeast to be %t but got %t",
-					tc.expectWasLeast,
-					gotWasLeast,
-				)
-			}
-
-			if gotPopped != tc.expectPopped {
-				t.Errorf(
-					"expect popped to be %d but got %d",
-					tc.expectPopped,
-					gotPopped,
-				)
-			}
-		})
-	}
-}
-
-func TestPopIfNotLeast(t *testing.T) {
-	type test struct {
-		name              string
-		values            []int
-		value             int
-		expectPopped      int
-		expectWasNotLeast bool
-	}
-
-	tests := []test{
-		{
-			name:              "with not least",
-			values:            []int{2, 3, 4},
-			value:             3,
-			expectPopped:      2,
-			expectWasNotLeast: true,
-		},
-		{
-			name:              "without not least",
-			values:            []int{2, 3, 4},
-			value:             1,
-			expectPopped:      0,
-			expectWasNotLeast: false,
-		},
-		{
-			name:              "with empty",
-			values:            []int{},
-			value:             1,
-			expectPopped:      0,
-			expectWasNotLeast: false,
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			heap := NewHeap(testLesser)
-			heap.PushMany(tc.values...)
-			gotPopped, gotWasNotLeast := heap.PopIfNotLeast(tc.value)
-
-			if gotWasNotLeast != tc.expectWasNotLeast {
-				t.Errorf(
-					"expect wasNotLeast to be %t but got %t",
-					tc.expectWasNotLeast,
-					gotWasNotLeast,
-				)
-			}
-
-			if gotPopped != tc.expectPopped {
-				t.Errorf(
-					"expect popped to be %d but got %d",
-					tc.expectPopped,
-					gotPopped,
-				)
+			if !got {
+				t.Errorf("expected a heap option but got false")
 			}
 		})
 	}
