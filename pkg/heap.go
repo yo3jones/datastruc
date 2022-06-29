@@ -23,7 +23,7 @@ func NewHeap[T any](
 	for _, option := range options {
 		switch option := option.(type) {
 		case HeapOptionCapacity:
-			capacity = option.value
+			capacity = option.Value
 		}
 	}
 
@@ -153,7 +153,7 @@ type HeapOption interface {
 }
 
 type HeapOptionCapacity struct {
-	value int
+	Value int
 }
 
 func (option HeapOptionCapacity) isHeapOption() bool {
