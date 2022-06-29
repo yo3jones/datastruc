@@ -41,6 +41,16 @@ func TestSyncHeap(t *testing.T) {
 	}
 }
 
+func TestSyncClear(t *testing.T) {
+	heap := NewSyncHeap(testLesser)
+	heap.PushMany(1, 2, 3)
+	heap.Clear()
+
+	if !heap.IsEmpty() {
+		t.Errorf("expected the heap to be empty but was not")
+	}
+}
+
 func TestPopIf(t *testing.T) {
 	type test struct {
 		name            string

@@ -1,6 +1,7 @@
 package datastruc
 
 type Heap[T any] interface {
+	Clear()
 	IsEmpty() bool
 	Len() int
 	Peak() T
@@ -33,6 +34,10 @@ func NewHeap[T any](
 	}
 
 	return heap
+}
+
+func (heap *heap[T]) Clear() {
+	heap.data = heap.data[:0]
 }
 
 func (heap *heap[T]) IsEmpty() bool {

@@ -24,6 +24,13 @@ func NewSyncHeap[T any](
 	}
 }
 
+func (heap *syncHeap[T]) Clear() {
+	heap.lock.Lock()
+	defer heap.lock.Unlock()
+
+	heap.backingHeap.Clear()
+}
+
 func (heap *syncHeap[T]) IsEmpty() bool {
 	heap.lock.Lock()
 	defer heap.lock.Unlock()

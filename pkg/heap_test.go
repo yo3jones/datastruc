@@ -46,6 +46,16 @@ func TestHeap(t *testing.T) {
 	}
 }
 
+func TestClear(t *testing.T) {
+	heap := NewHeap(testLesser)
+	heap.PushMany(1, 2, 3)
+	heap.Clear()
+
+	if !heap.IsEmpty() {
+		t.Errorf("expected the heap to be empty but was not")
+	}
+}
+
 func TestIsHeapOption(t *testing.T) {
 	type test struct {
 		name   string
